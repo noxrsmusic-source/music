@@ -27,7 +27,7 @@ function parseAccurateSingers(item) {
         .map((a) => a.name);
       if (singersOnly.length > 0) accurateArtist = singersOnly.join(", ");
     }
-    if (!accurateArtist && mi.artistMap && Array.isArray(mi.artistMap.primary_artists)) {
+    if (!accurateArtist && mi.artistMap && Array.isArray(mi.artistMap.primary_artists) && mi.artistMap.primary_artists.length > 0) {
       accurateArtist = mi.artistMap.primary_artists.map((a) => a.name).join(", ");
     }
     if (!accurateArtist && item.subtitle && typeof item.subtitle === "string") {
@@ -49,7 +49,6 @@ function parseAccurateSingers(item) {
 }
 
 module.exports = async (req, res) => {
-  // CORS Headers
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS,PATCH,DELETE,POST,PUT");
@@ -69,13 +68,15 @@ module.exports = async (req, res) => {
   }
 
   const cleanQuery = encodeURIComponent(query.trim());
-  const targetUrl = `https://www.jiosaavn.com/api.php?__call=autocomplete.get&query=${cleanQuery}&_format=json&_marker=0&cc=in&ctx=web60`;
+  
+  // High-reliability search API endpoints
+  const targetUrl = `https://www.jiosaavn.com/api.php?__call=search.getMoreResults&q=${cleanQuery}&_format=json&_marker=0&ctx=web60&p=1&n=20`;
 
   try {
-    // Node 18+ natively supports fetch
     const apiRes = await fetch(targetUrl, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*"
       },
     });
 
@@ -88,10 +89,12 @@ module.exports = async (req, res) => {
     }
 
     let rawList = [];
-    if (data && data.songs && Array.isArray(data.songs.data)) {
-      rawList = data.songs.data;
-    } else if (data && Array.isArray(data.results)) {
+    if (data && Array.isArray(data.results)) {
       rawList = data.results;
+    } else if (data && data.songs && Array.isArray(data.songs.data)) {
+      rawList = data.songs.data;
+    } else if (Array.isArray(data)) {
+      rawList = data;
     }
 
     const results = rawList
