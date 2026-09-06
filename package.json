@@ -1,7 +1,7 @@
 {
-  "name": "saavn-netlify-api",
+  "name": "rx-player-backend",
   "version": "1.0.0",
   "dependencies": {
-    "node-fetch": "^2.6.7"
+    "crypto-js": "^4.2.0"
   }
 }
